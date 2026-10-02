@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Climb to Production 🎂</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎂</text></svg>">
+<style>
+:root{--bg:#0d1117;--card:#161b22;--line:#30363d;--txt:#e6edf3;--dim:#8b949e;--ok:#3fb950;--bad:#f85149;--acc:#58a6ff;--rope:#c8a165}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:var(--bg);color:var(--txt);font-family:ui-monospace,"JetBrains Mono",Menlo,Consolas,monospace}
+body{padding:env(safe-area-inset-top,0) 0 env(safe-area-inset-bottom,0)}
+.wrap{max-width:860px;margin:0 auto;padding:20px 16px}
+h1{font-size:clamp(20px,5vw,30px);margin:0 0 4px}h1 span{color:var(--acc)}
+.sub{color:var(--dim);font-size:13px;margin-bottom:14px}
+.hud{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;color:var(--dim);margin-bottom:14px;align-items:center}
+.hud b{color:var(--txt)}
+.hud button{margin-left:auto;background:none;border:1px solid var(--line);color:var(--txt);border-radius:8px;padding:4px 10px;font:inherit;cursor:pointer}
+.game{display:grid;grid-template-columns:130px 1fr;gap:16px}
+@media(max-width:560px){.game{grid-template-columns:96px 1fr}}
+.rope-box{position:relative;height:470px;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#0b1020}
+.rope-box:before{content:"";position:absolute;inset:0;background-image:radial-gradient(1px 1px at 20% 30%,#fff,transparent),radial-gradient(1px 1px at 70% 20%,#fff,transparent),radial-gradient(1.5px 1.5px at 40% 60%,#fff9,transparent),radial-gradient(1px 1px at 85% 55%,#fff,transparent),radial-gradient(1px 1px at 15% 80%,#fff8,transparent),radial-gradient(1px 1px at 60% 90%,#fff8,transparent);animation:tw 3s infinite alternate}
+@keyframes tw{to{opacity:.35}}
+.sway{position:absolute;inset:0;transform-origin:50% 0;animation:sw 6s ease-in-out infinite}
+@keyframes sw{0%,100%{transform:rotate(-1.2deg)}50%{transform:rotate(1.2deg)}}
+.rope{position:absolute;left:50%;top:56px;bottom:10px;width:10px;margin-left:-5px;border-radius:5px;background:repeating-linear-gradient(135deg,#a57f45 0 6px,var(--rope) 6px 12px)}
+.knot{position:absolute;left:50%;width:22px;height:12px;margin-left:-11px;border-radius:6px;background:#8a6a38}
+.top{position:absolute;top:8px;left:0;right:0;text-align:center;font-size:32px;cursor:pointer;user-select:none;z-index:2}
+.climber{position:absolute;left:50%;margin-left:-22px;width:44px;height:66px;transition:bottom .8s cubic-bezier(.3,1.4,.5,1);z-index:1}
+.climber.shake{animation:shk .4s}
+@keyframes shk{25%{transform:translateX(-8px) rotate(-8deg)}75%{transform:translateX(8px) rotate(8deg)}}
+.climber line{stroke-width:4.5;stroke-linecap:round;stroke:#58a6ff}
+.climber .l1,.climber .l2{stroke:#8b949e}
+.climber.c .a1,.climber.c .l2{animation:ar .3s 3 alternate}
+.climber.c .a2,.climber.c .l1{animation:ar .3s 3 alternate .15s}
+@keyframes ar{to{transform:translateY(-7px)}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px}
+.lvl{color:var(--acc);font-size:12px;letter-spacing:.08em;text-transform:uppercase}
+.q{font-size:clamp(16px,4vw,19px);margin:8px 0 14px;line-height:1.4}
+pre.code{background:#010409;border:1px solid var(--line);border-radius:8px;padding:10px;margin:0 0 12px;font-size:13px;min-height:0;color:var(--txt);display:none}
+.opt,.inp{display:block;width:100%;text-align:left;margin:8px 0;padding:12px 14px;background:#0d1117;color:var(--txt);border:1px solid var(--line);border-radius:8px;font:inherit;transition:.15s}
+.opt{cursor:pointer}.opt:hover,.inp:focus{border-color:var(--acc);outline:0}
+.opt.ok{border-color:var(--ok);background:#12261a}.opt.bad{border-color:var(--bad);background:#2d1416}
+.msg{min-height:22px;margin-top:10px;font-size:13px;color:var(--dim)}
+.bar{height:6px;background:var(--line);border-radius:3px;margin-bottom:14px;overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--ok),var(--acc));transition:width .6s}
+.ov{display:none;position:fixed;inset:0;background:var(--bg);z-index:5;overflow:auto;padding:calc(24px + env(safe-area-inset-top,0)) 16px 30px}
+.ov .inner{max-width:640px;margin:0 auto;position:relative;z-index:1}
+pre{background:#010409;border:1px solid var(--line);border-radius:10px;padding:14px;font-size:13px;line-height:1.55;white-space:pre-wrap;word-break:break-word;min-height:150px;color:var(--ok)}
+.big{font-size:clamp(26px,7vw,42px);margin:10px 0;line-height:1.15}.big em{font-style:normal;color:var(--acc)}
+.btn{font:inherit;background:var(--acc);color:#04111f;border:0;border-radius:8px;padding:12px 16px;cursor:pointer;font-weight:700;margin:6px 6px 0 0}
+.btn.alt{background:#21262d;color:var(--txt);border:1px solid var(--line)}
+canvas#cv{position:fixed;inset:0;pointer-events:none;z-index:9}
+canvas#mx{position:fixed;inset:0;z-index:0;opacity:.45}
+.toast{position:fixed;top:calc(12px + env(safe-area-inset-top,0));left:50%;transform:translateX(-50%);background:#21262d;border:1px solid var(--acc);padding:10px 16px;border-radius:10px;z-index:20;font-size:13px;animation:tin .4s;white-space:nowrap}
+@keyframes tin{from{opacity:0;top:-40px}}
+.fl{transform-box:fill-box;transform-origin:50% 100%;animation:fk .25s infinite alternate}
+@keyframes fk{to{transform:scale(.85,1.12)}}.fl.off{display:none}.cd{cursor:pointer}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🧗 Climb to <span>Production</span></h1>
+  <div class="sub">Лізь по канату до вершини. Помилка — зісковзуєш вниз.</div>
+  <div class="hud">
+    <span>⏱ <b id="tm">0:00</b></span><span>❌ <b id="er">0</b></span><span>🔥 серія: <b id="st">0</b></span>
+    <button id="snd">🔊</button>
+  </div>
+  <div class="game">
+    <div class="rope-box" id="rb"><div class="top" id="cake">🎂</div>
+      <div class="sway"><div class="rope"></div>
+        <div class="climber" id="cl"><svg viewBox="0 0 40 60" width="44" height="66">
+          <line class="l1" x1="17" y1="40" x2="13" y2="56"/><line class="l2" x1="23" y1="40" x2="27" y2="52"/>
+          <rect x="12" y="22" width="16" height="20" rx="6" fill="#58a6ff"/>
+          <line class="a1" x1="14" y1="27" x2="18" y2="10"/><line class="a2" x1="26" y1="27" x2="22" y2="17"/>
+          <circle cx="20" cy="15" r="8" fill="#f5c6a0"/>
+          <path d="M11 14a9 9 0 0 1 18 0" fill="none" stroke="#e6edf3" stroke-width="2.5"/>
+          <rect x="8" y="12" width="4" height="8" rx="2" fill="#e6edf3"/><rect x="28" y="12" width="4" height="8" rx="2" fill="#e6edf3"/>
+          <circle cx="17" cy="16" r="1.2" fill="#0d1117"/><circle cx="23" cy="16" r="1.2" fill="#0d1117"/>
+          <path d="M17 20q3 2 6 0" stroke="#0d1117" fill="none"/></svg></div>
+      </div></div>
+    <div class="card">
+      <div class="bar"><i id="pb"></i></div>
+      <div class="lvl" id="lv"></div><div class="q" id="q"></div>
+      <pre class="code" id="code"></pre><div id="opts"></div><div class="msg" id="msg"></div>
+    </div>
+  </div>
+</div>
+
+<div class="ov" id="intro" style="display:block"><div class="inner">
+  <div class="big">Привіт, <em class="nm"></em>! 👋</div>
+<pre>$ ssh birthday@party.dev
+Welcome, senior backend legend.
+
+Місія: піднятися по канату до продакшну,
+відповісти на 8 питань і не покласти прод.
+
+На вершині чекає сюрприз 🎁
+(увімкни звук і готуй мікрофон 😉)</pre>
+  <button class="btn" id="go">▶ npm run climb</button>
+</div></div>
+
+<div class="ov" id="fin"><canvas id="mx"></canvas><div class="inner">
+  <div id="sTerm"><div class="big">З Днем народження, <em class="nm"></em>! 🎉</div>
+    <pre id="term"></pre><button class="btn" id="bn" style="display:none">▶ Відкрити сюрприз</button></div>
+  <div id="sCake" style="display:none;text-align:center"><div class="big">Задуй свічки 🕯</div>
+    <svg id="ck" viewBox="0 0 300 250" width="100%" style="max-width:360px">
+      <ellipse cx="150" cy="232" rx="135" ry="14" fill="#21262d"/>
+      <rect x="40" y="152" width="220" height="78" rx="12" fill="#c9788e"/>
+      <rect x="70" y="100" width="160" height="58" rx="12" fill="#f0b7c6"/>
+      <path d="M70 112q20 18 40 0t40 0t40 0t40 0v-12H70z" fill="#fff"/>
+      <g id="cg"></g></svg>
+    <div class="msg" id="ms">Свічок мало, бо I/O стільки не витримає 😄</div>
+    <button class="btn" id="mb">🎤 Дмухати в мікрофон</button><div class="msg">або просто тапай по свічках 👆</div></div>
+  <div id="sShow" style="display:none;margin-top:50vh">
+    <pre id="msgp" style="color:var(--txt);min-height:0"></pre>
+    <button class="btn" id="b1">git push --force happiness</button>
+    <button class="btn" id="b2">sudo make wish</button>
+    <button class="btn alt" id="b3">🏆 Сертифікат</button>
+    <button class="btn alt" id="b4">↻ Ще раз</button>
+    <pre id="out" style="min-height:0;display:none"></pre></div>
+</div></div>
+<canvas id="cv"></canvas>
+
+<script>
+// ===== НАЛАШТУВАННЯ (можна міняти) =====
+var NAME=new URLSearchParams(location.search).get("name")||"Саня";
+var FROM="Твій друг";
+var MSG=NAME+", бажаю тобі стабільного аптайму в житті, нуль багів у проді, швидких деплоїв і команду, яка завжди каже LGTM. Ти найкращий — і в коді, і поза ним! 🚀";
+var Q=[
+ {q:"Який HTTP-статус означає, що ресурс успішно СТВОРЕНО?",o:["200 OK","201 Created","204 No Content","302 Found"],a:1},
+ {q:"Що найкраще пришвидшить повільний SELECT по email у величезній таблиці?",o:["SELECT *","Перезапустити БД","Індекс на email","Більше кави"],a:2},
+ {q:"Знайди баг у цьому коді:",code:"let sum = 0;\nfor (let i = 0; i <= arr.length; i++) {\n  sum += arr[i];\n}",o:["let замість const","i <= arr.length (off-by-one)","sum не ініціалізована","Немає await"],a:1},
+ {q:"Який HTTP-метод ідемпотентно ЗАМІНЮЄ ресурс цілком? (3 літери, впиши)",t:["put"]},
+ {q:"Що таке проблема N+1 в ORM?",o:["Один запит + N додаткових запитів у циклі","N серверів і один балансувальник","Ліміт у N+1 з'єднань","Баг у версії N+1"],a:0},
+ {q:"Що зробить git push --force на спільну гілку в п'ятницю ввечері?",o:["Нічого особливого","Задеплоїть щастя","Виправить усі баги","Зіпсує колегам вихідні"],a:3},
+ {q:"Дві найскладніші речі в програмуванні: інвалідація кешу і...",o:["Іменування змінних","Написання тестів","Налаштування CI","Вибір ноутбука"],a:0},
+ {q:"«У мене на машині працює!» — яке рішення?",o:["Docker 🐳","Видалити тести","Віддати клієнту свій ноутбук","Нікому не казати"],a:0}
+];
+var WISHES=["Нехай усі деплої проходять з першого разу 🚀","Нехай прод не падає в п'ятницю 🙏","Нехай code review завжди буде LGTM 👍","Нехай у логах буде тільки INFO ☮️","Нехай міграції ніколи не лочать таблицю 🔓","Нехай зарплата росте швидше за latency 📈","Нехай кава ніколи не закінчується ☕"];
+// =======================================
+var lvl=0,busy=false,errs=0,streak=0,t0=0,tick=null,mute=false,ac=null,got={},lit=5,cakeOn=false;
+var $=function(i){return document.getElementById(i)};
+document.querySelectorAll(".nm").forEach(function(e){e.textContent=NAME});
+document.title="Climb to Production 🎂 для "+NAME;
+function shuffle(a){for(var i=a.length-1;i>0;i--){var j=Math.random()*(i+1)|0,t=a[i];a[i]=a[j];a[j]=t}return a}
+function fmt(s){return Math.floor(s/60)+":"+("0"+s%60).slice(-2)}
+function elapsed(){return Math.round((Date.now()-t0)/1000)}
+function toast(t){var e=document.createElement("div");e.className="toast";e.textContent=t;document.body.appendChild(e);setTimeout(function(){e.remove()},2600)}
+function ach(k,t){if(!got[k]){got[k]=1;toast(t)}}
+
+function beep(f,d,type,v,delay){if(mute)return;try{ac=ac||new (window.AudioContext||window.webkitAudioContext)();var o=ac.createOscillator(),g=ac.createGain(),s=ac.currentTime+(delay||0);o.type=type||"square";o.frequency.value=f;g.gain.setValueAtTime(v||.05,s);g.gain.exponentialRampToValueAtTime(.0001,s+d);o.connect(g);g.connect(ac.destination);o.start(s);o.stop(s+d)}catch(e){}}
+function sOk(){beep(660,.12);beep(880,.18,"square",.05,.1)}
+function sBad(){beep(160,.35,"sawtooth",.07)}
+function sWin(){[523,659,784,1047,784,1047,1319].forEach(function(f,i){beep(f,.22,"triangle",.08,i*.14)})}
+$("snd").onclick=function(){mute=!mute;this.textContent=mute?"🔇":"🔊"};
+
+// канат
+function knots(){var rb=$("rb").querySelector(".sway"),h=470;for(var i=1;i<=Q.length;i++){var k=document.createElement("div");k.className="knot";k.style.bottom=(30+(h-154)*i/Q.length+36)+"px";rb.appendChild(k)}}
+function place(){
+  var p=lvl/Q.length;
+  $("cl").style.bottom=(30+(470-154)*p)+"px";
+  $("rb").style.background="linear-gradient(hsl("+(240-p*190|0)+",55%,"+(9+p*10|0)+"%),hsl("+(250-p*210|0)+",60%,"+(14+p*30|0)+"%))";
+}
+function render(){
+  var d=Q[lvl];
+  $("lv").textContent="Рівень "+(lvl+1)+" / "+Q.length;
+  $("q").textContent=d.q;$("pb").style.width=(lvl/Q.length*100)+"%";$("msg").textContent="";
+  $("code").style.display=d.code?"block":"none";$("code").textContent=d.code||"";
+  var o=$("opts");o.innerHTML="";
+  if(d.t){
+    var inp=document.createElement("input");inp.className="inp";inp.placeholder="> впиши тут";inp.autocapitalize="off";inp.autocomplete="off";inp.spellcheck=false;
+    var chk=function(){answer(d.t.indexOf(inp.value.trim().toLowerCase())>-1,inp)};
+    inp.onkeydown=function(e){if(e.key==="Enter")chk()};o.appendChild(inp);setTimeout(function(){inp.focus()},50);
+    var b=document.createElement("button");b.className="btn";b.textContent="Відправити";b.onclick=chk;o.appendChild(b);
+  }else shuffle(d.o.map(function(t,i){return{t:t,ok:i===d.a}})).forEach(function(x){
+    var b=document.createElement("button");b.className="opt";b.textContent=x.t;b.onclick=function(){answer(x.ok,b)};o.appendChild(b)});
+  place();
+}
+function answer(ok,el){
+  if(busy)return;busy=true;var c=$("cl");
+  if(ok){
+    streak++;$("st").textContent=streak;if(el.classList)el.classList.add("ok");
+    $("msg").textContent=streak>=3?"🔥 "+streak+" поспіль! 200 OK":"✅ 200 OK — лізь вище!";
+    sOk();lvl++;place();c.classList.add("c");setTimeout(function(){c.classList.remove("c")},1000);
+    ach("fb","🩸 First blood");if(streak===3)ach("ht","🔥 Hat-trick: 3 поспіль");if(lvl===4)ach("half","🧗 Півдороги до проду");
+    setTimeout(function(){busy=false;lvl>=Q.length?finish():render()},1000);
+  }else{
+    streak=0;errs++;$("st").textContent=0;$("er").textContent=errs;if(el.classList)el.classList.add("bad");
+    $("msg").textContent="❌ 500 Internal Server Error";sBad();c.classList.add("shake");ach("bug","🐛 Це не баг, це фіча");
+    if(lvl>0){lvl--;place()}
+    setTimeout(function(){c.classList.remove("shake");busy=false;render()},1100);
+  }
+}
+function rank(){return errs===0?"Staff Engineer (без жодного 500!)":errs<=2?"Senior Backend Developer":"Middle+ (але ми тебе любимо)"}
+
+// матриця
+var mx=$("mx"),mc=mx.getContext("2d"),dr=[],mt=null,S="01{}[]<>/;=$#&*";
+function matrix(){mx.width=innerWidth;mx.height=innerHeight;dr=[];for(var i=0;i<Math.ceil(mx.width/16);i++)dr.push(Math.random()*-50);
+  mt=setInterval(function(){mc.fillStyle="rgba(13,17,23,.12)";mc.fillRect(0,0,mx.width,mx.height);mc.fillStyle="#3fb950";mc.font="14px monospace";
+    for(var i=0;i<dr.length;i++){mc.fillText(S.charAt(Math.random()*S.length|0),i*16,dr[i]*16);if(dr[i]*16>mx.height&&Math.random()>.975)dr[i]=0;dr[i]++}},50)}
+
+// фінал: термінал
+function finish(){
+  clearInterval(tick);var secs=elapsed();window._fin=secs;
+  $("pb").style.width="100%";$("fin").style.display="block";matrix();sWin();boom(200);
+  if(errs===0)ach("fl","💎 Flawless: 0 помилок");if(secs<90)ach("sp","⚡ Speedrunner");
+  var L=["$ deploy birthday --env=production","Building happiness...... done","Running tests: "+Q.length+"/"+Q.length+" passed ✔","Migrating to age+1...... OK","","HTTP/1.1 200 OK","{",'  "user": "'+NAME+'",','  "rank": "'+rank()+'",','  "time": "'+fmt(secs)+'",','  "mistakes": '+errs+',','  "bugs": 0',"}","","🥳 ЗАЛИШИЛОСЬ ОДНЕ: ЗАДУТИ СВІЧКИ"];
+  var t=$("term"),i=0;t.textContent="";
+  (function next(){if(i>=L.length){$("bn").style.display="inline-block";return}t.textContent+=L[i++]+"\n";setTimeout(next,i<6?420:220)})();
+}
+// свічки
+(function(){var h="";for(var i=0;i<5;i++){var x=95+i*28;h+='<g class="cd" data-i="'+i+'"><rect x="'+(x-7)+'" y="50" width="14" height="52" fill="transparent"/><rect x="'+(x-4)+'" y="74" width="8" height="28" rx="2" fill="#58a6ff"/><ellipse class="fl" cx="'+x+'" cy="62" rx="6" ry="11" fill="#ffb347"/></g>'}$("cg").innerHTML=h})();
+$("bn").onclick=function(){$("sTerm").style.display="none";$("sCake").style.display="block";cakeOn=true;sOk()};
+$("ck").onclick=function(e){var c=e.target.closest(".cd");if(c)blow(+c.dataset.i)};
+function blow(i){
+  var f=document.querySelectorAll(".fl");
+  if(i==null){for(i=0;i<f.length&&f[i].classList.contains("off");i++);}
+  if(i>=f.length||f[i].classList.contains("off"))return;
+  f[i].classList.add("off");beep(300,.2,"sine",.08);lit--;
+  if(!lit){cakeOn=false;setTimeout(finale,900)}
+}
+$("mb").onclick=async function(){
+  try{var s=await navigator.mediaDevices.getUserMedia({audio:true});ac=ac||new (window.AudioContext||window.webkitAudioContext)();ac.resume();
+    var an=ac.createAnalyser();an.fftSize=512;ac.createMediaStreamSource(s).connect(an);var d=new Uint8Array(512),last=0;
+    $("ms").textContent="🎤 Слухаю... дмухай сильно!";this.style.display="none";
+    (function loop(){an.getByteTimeDomainData(d);var m=0;for(var i=0;i<512;i++)m=Math.max(m,Math.abs(d[i]-128));
+      if(m>40&&Date.now()-last>350){last=Date.now();blow()}if(cakeOn)requestAnimationFrame(loop);else s.getTracks().forEach(function(t){t.stop()})})();
+  }catch(e){$("ms").textContent="Мікрофон недоступний — тапай по свічках 👆"}
+};
+
+// фінал: феєрверк з тексту
+var cv=$("cv"),cx=cv.getContext("2d"),P=[],TP=[],run=false;
+function rs(){cv.width=innerWidth;cv.height=innerHeight}rs();addEventListener("resize",rs);
+function boom(n,emo){var cols=["#58a6ff","#3fb950","#f0883e","#ff7b72","#d2a8ff","#e3b341"];
+  for(var i=0;i<n;i++)P.push({x:Math.random()*cv.width,y:-10-Math.random()*cv.height*.5,vx:Math.random()*4-2,vy:Math.random()*3+2,s:Math.random()*8+4,c:cols[i%6],r:Math.random()*6,e:emo?emo[i%emo.length]:null});
+  if(!run){run=true;loop()}}
+function pts(txt){
+  var W=cv.width,H=cv.height/2|0,o=document.createElement("canvas");o.width=W;o.height=cv.height;var x=o.getContext("2d"),sz=Math.min(W*.92/(txt.length*.62),150);
+  x.font="bold "+sz+"px monospace";x.textAlign="center";x.textBaseline="middle";x.fillText(txt,W/2,cv.height*.26);
+  var d=x.getImageData(0,0,W,H).data,r=[],st=Math.max(3,sz/16|0);
+  for(var y=0;y<H;y+=st)for(var X=0;X<W;X+=st)if(d[(y*W+X)*4+3]>128)r.push([X,y]);return shuffle(r)}
+function form(txt,hue){
+  var p=pts(txt);
+  for(var i=0;i<p.length;i++){var t=TP[i]||(TP[i]={x:cv.width/2,y:cv.height,vx:0,vy:0});t.tx=p[i][0];t.ty=p[i][1];t.h=p[i][0]/cv.width*120+hue;t.vx+=(Math.random()-.5)*26;t.vy-=Math.random()*18+4}
+  TP.length=p.length;if(!run){run=true;loop()}}
+function loop(){
+  cx.clearRect(0,0,cv.width,cv.height);
+  P=P.filter(function(p){return p.y<cv.height+30});
+  P.forEach(function(p){p.x+=p.vx;p.y+=p.vy;p.r+=.1;cx.save();cx.translate(p.x,p.y);
+    if(p.e){cx.font="26px serif";cx.fillText(p.e,0,0)}else{cx.rotate(p.r);cx.fillStyle=p.c;cx.fillRect(-p.s/2,-p.s/4,p.s,p.s/2)}cx.restore()});
+  TP.forEach(function(t){t.vx+=(t.tx-t.x)*.03;t.vy+=(t.ty-t.y)*.03;t.vx*=.88;t.vy*=.88;t.x+=t.vx;t.y+=t.vy;
+    cx.fillStyle="hsl("+t.h+",90%,65%)";var s=2+Math.random()*2;cx.fillRect(t.x,t.y,s,s)});
+  if(P.length||TP.length)requestAnimationFrame(loop);else run=false}
+function finale(){
+  $("sCake").style.display="none";$("sShow").style.display="block";$("msgp").textContent=MSG+"\n\n— "+FROM;
+  var T=["З ДНЕМ","НАРОДЖЕННЯ",NAME.toUpperCase()],i=0;
+  (function s(){form(T[i],i*100);boom(50);sWin();if(++i<T.length)setTimeout(s,3300);else setInterval(function(){boom(40,["🎉","🚀","🎂","🐳","☕"]);form(T[2],Math.random()*360|0)},6000)})();
+}
+function out(t){var o=$("out");o.style.display="block";o.textContent=t}
+$("b1").onclick=function(){boom(300);sWin();out("$ git push --force happiness\n + happiness -> origin/main (forced update) 🚀")};
+$("b2").onclick=function(){boom(100);sOk();out("$ sudo make wish\n[sudo] password: ********\n"+WISHES[Math.random()*WISHES.length|0])};
+$("b4").onclick=function(){location.reload()};
+$("b3").onclick=function(){
+  var c=document.createElement("canvas");c.width=1000;c.height=680;var x=c.getContext("2d");
+  x.fillStyle="#0d1117";x.fillRect(0,0,1000,680);x.strokeStyle="#c8a165";x.lineWidth=6;x.strokeRect(24,24,952,632);x.strokeStyle="#58a6ff";x.lineWidth=2;x.strokeRect(40,40,920,600);
+  x.textAlign="center";x.fillStyle="#58a6ff";x.font="bold 26px monospace";x.fillText("// CERTIFICATE OF PRODUCTION",500,110);
+  x.font="60px serif";x.fillText("🎂 🚀 🎉",500,200);x.fillStyle="#8b949e";x.font="22px monospace";x.fillText("цим підтверджується, що",500,270);
+  x.fillStyle="#e6edf3";x.font="bold 64px monospace";x.fillText(NAME,500,350);x.fillStyle="#3fb950";x.font="26px monospace";x.fillText(rank(),500,410);
+  x.fillStyle="#8b949e";x.font="20px monospace";x.fillText("піднявся по канату за "+fmt(window._fin||0)+" | помилок: "+errs+" | bugs: 0",500,470);
+  x.fillStyle="#e6edf3";x.font="bold 30px monospace";x.fillText("З Днем народження! 🥳",500,590);
+  var a=document.createElement("a");a.download="certificate-"+NAME+".png";a.href=c.toDataURL("image/png");a.click()};
+
+$("cake").onclick=function(){this.n=(this.n||0)+1;if(this.n%5===0){boom(80,["🐛","☕","🐳","🚀","💾","🎂"]);sOk()}};
+$("go").onclick=function(){$("intro").style.display="none";t0=Date.now();tick=setInterval(function(){$("tm").textContent=fmt(elapsed())},500);sOk();render()};
+knots();place();
+console.log("Привіт, "+NAME+"! Так, ми знали, що ти відкриєш DevTools 😎 Підказка: клікни 5 разів на 🎂 на вершині канату.");
+</script>
+</body>
+</html>
